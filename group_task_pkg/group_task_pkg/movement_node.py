@@ -18,9 +18,10 @@ class MovementNode(Node):
     def __init__(self):
         super().__init__('movement_server_node')
         self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.topic_name = "odom"
 
 
-        self.odom_subscriber = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
+        self.odom_subscriber = self.create_subscription(Odometry, self.topic_name, self.odom_callback, 10)
         self.robot_x = 0.0
         self.robot_y = 0.0
         self.robot_yaw = 0.0
@@ -44,7 +45,17 @@ class MovementNode(Node):
             self.execute_movement_yaw_callback,
             callback_group=self.callback_group
         )
-
+        self.wait_for_publisher()
+    def wait_for_publisher(self):
+        self.get_logger().info(f"Waiting for a publisher on {self.topic_name}...")
+        
+        # Loop while the number of publishers on the topic is 0
+        while self.count_publishers(self.topic_name) == 0:
+            if not rclpy.ok():
+                return
+            time.sleep(0.5)  # Sleep briefly to avoid maxing out the CPU
+            
+        self.get_logger().info(f"Publisher found on {self.topic_name}. Continuing execution.")
     def execute_movement_x_callback(self, goal_handle):
         self.get_logger().info('Executing movement in X direction...')
    
