@@ -1,0 +1,6 @@
+float32 angle
+float32 angular_speed
+---
+bool goal_reached
+---
+float32 remaining_angle
