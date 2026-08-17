@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+        "turtle_control = individual_task_pkg.node:main",
         ],
     },
 )
