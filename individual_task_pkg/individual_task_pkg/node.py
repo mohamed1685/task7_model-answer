@@ -17,10 +17,12 @@ class TurtleControl(Node):
         self.s_is_pressed = False
 
         self.get_logger().info('Turtle control node has been started.')
-
-        self.cmd_vel_publisher = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
-        self.dominant_colour_publisher = self.create_publisher(String, '/dominant_colour', 10)
-        self.colour_subscriber = self.create_subscription(Color, '/turtle1/color_sensor', self.colour_callback, 10)
+        self.declare_parameter('velocity_topic', '/turtle1/cmd_vel')
+        self.declare_parameter('dominant_colour_topic', '/dominant_colour')
+        self.declare_parameter('colour_topic', '/turtle1/color_sensor')
+        self.cmd_vel_publisher = self.create_publisher(Twist, self.get_parameter('velocity_topic').value, 10)
+        self.dominant_colour_publisher = self.create_publisher(String, self.get_parameter('dominant_colour_topic').value, 10)
+        self.colour_subscriber = self.create_subscription(Color, self.get_parameter('colour_topic').value, self.colour_callback, 10)
         self.timer = self.create_timer(0.2, self.timer_callback)
 
         self.dominant_colour = None

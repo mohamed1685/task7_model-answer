@@ -9,7 +9,12 @@ def generate_launch_description():
             package='individual_task_pkg',
             executable='turtle_control',
             arguments=[],
-            output='screen'
+            output='screen',
+            parameters=[
+                {'velocity_topic': '/turtle1/cmd_vel',
+                'dominant_colour_topic': '/dominant_color',
+                'colour_topic': '/turtle1/color_sensor'}
+            ]
         ),
          Node(
             package='turtlesim',
