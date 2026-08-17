@@ -3,9 +3,11 @@ from rclpy.node import Node
 
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistStamped
+
 from pynput import keyboard
 from turtlesim.msg import Color
-
+from rclpy.parameter_event_handler import ParameterEventHandler
 
 class TurtleControl(Node):
     def __init__(self):
@@ -20,7 +22,17 @@ class TurtleControl(Node):
         self.declare_parameter('velocity_topic', '/turtle1/cmd_vel')
         self.declare_parameter('dominant_colour_topic', '/dominant_colour')
         self.declare_parameter('colour_topic', '/turtle1/color_sensor')
-        self.cmd_vel_publisher = self.create_publisher(Twist, self.get_parameter('velocity_topic').value, 10)
+
+
+        self.declare_parameter('use_stamped_vel', False)
+        self.handler = ParameterEventHandler(self)
+        self.callback_handle = self.handler.add_parameter_callback(
+            parameter_name="use_stamped_vel",
+            node_name="turtle_control",
+            callback=self.on_use_stamped_vel_changed,
+        )
+
+        self.start_cmd_vel_publisher()
         self.dominant_colour_publisher = self.create_publisher(String, self.get_parameter('dominant_colour_topic').value, 10)
         self.colour_subscriber = self.create_subscription(Color, self.get_parameter('colour_topic').value, self.colour_callback, 10)
         self.timer = self.create_timer(0.2, self.timer_callback)
@@ -48,10 +60,17 @@ class TurtleControl(Node):
        # self.get_logger().info(f'Dominant color: {self.dominant_colour}')
 
     def publish_cmd_vel(self, linear_x, angular_z):
-        twist_msg = Twist()
-        twist_msg.linear.x = linear_x
-        twist_msg.angular.z = angular_z
-        self.cmd_vel_publisher.publish(twist_msg)
+        if self.get_parameter('use_stamped_vel').value:
+            twist_msg = TwistStamped()
+            twist_msg.header.stamp = self.get_clock().now().to_msg()  
+            twist_msg.twist.linear.x = linear_x
+            twist_msg.twist.angular.z = angular_z
+            self.cmd_vel_publisher.publish(twist_msg)
+        else:
+            twist_msg = Twist()
+            twist_msg.linear.x = linear_x
+            twist_msg.angular.z = angular_z
+            self.cmd_vel_publisher.publish(twist_msg)
 
     def publish_dominant_colour(self):
         if self.dominant_colour is not None:
@@ -106,6 +125,17 @@ class TurtleControl(Node):
                 self.s_is_pressed = False
         except AttributeError:
             pass
+    def start_cmd_vel_publisher(self):
+        if self.get_parameter('use_stamped_vel').value:
+            self.cmd_vel_publisher = self.create_publisher(TwistStamped, self.get_parameter('velocity_topic').value, 10)
+        else:
+            self.cmd_vel_publisher = self.create_publisher(Twist, self.get_parameter('velocity_topic').value, 10)
+    def on_use_stamped_vel_changed(self, event):
+        self.get_logger().info(f"'use_stamped_vel' parameter changed to: {event}")
+        # Stop the current publisher
+        self.cmd_vel_publisher.destroy()
+        # Start a new publisher based on the updated parameter value
+        self.start_cmd_vel_publisher()
 
 
 def main(args=None):

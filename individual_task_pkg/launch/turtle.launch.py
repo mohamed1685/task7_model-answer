@@ -6,6 +6,11 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Launch arguments for individual_task_pkg parameters
+    velocity_stamped_arg = DeclareLaunchArgument(
+        'use_stamped_vel',
+        default_value='False',
+        description='Whether to use TwistStamped for velocity commands'
+    )
     velocity_topic_arg = DeclareLaunchArgument(
         'velocity_topic',
         default_value='/turtle1/cmd_vel',
@@ -47,6 +52,7 @@ def generate_launch_description():
         background_r_arg,
         background_g_arg,
         background_b_arg,
+        velocity_stamped_arg,
 
         # Nodes
         Node(
@@ -57,6 +63,7 @@ def generate_launch_description():
                 'velocity_topic': LaunchConfiguration('velocity_topic'),
                 'dominant_colour_topic': LaunchConfiguration('dominant_colour_topic'),
                 'colour_topic': LaunchConfiguration('colour_topic'),
+                'use_stamped_vel': LaunchConfiguration('use_stamped_vel'),
             }]
         ),
         Node(
